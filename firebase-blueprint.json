@@ -1,0 +1,207 @@
+{
+  "entities": {
+    "SchoolSetting": {
+      "title": "SchoolSetting",
+      "description": "General settings and profile for Workers Model Higher Secondary School Pishin",
+      "type": "object",
+      "properties": {
+        "schoolName": { "type": "string", "description": "Official name of the school" },
+        "location": { "type": "string", "description": "Address and campus location" },
+        "phone": { "type": "string", "description": "Office contact phone number" },
+        "principalName": { "type": "string", "description": "Principal or Administrator name" },
+        "receiptPrefix": { "type": "string", "description": "Prefix for fee payment receipts" },
+        "currency": { "type": "string", "description": "Default currency code (PKR)" },
+        "timezone": { "type": "string", "description": "Timezone string" },
+        "defaultSessionId": { "type": "string", "description": "Currently active academic session ID" }
+      },
+      "required": ["schoolName", "location", "receiptPrefix", "currency"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile with role-based access control for school staff",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "description": "User email address" },
+        "displayName": { "type": "string", "description": "Full name of staff member" },
+        "role": { "type": "string", "enum": ["super_admin", "principal", "accounts_staff", "teacher"], "description": "Assigned access role" },
+        "assignedClasses": { "type": "array", "description": "Class IDs assigned to teacher" },
+        "phone": { "type": "string", "description": "Contact phone" },
+        "isActive": { "type": "boolean", "description": "Whether user account is active" }
+      },
+      "required": ["email", "displayName", "role", "isActive"]
+    },
+    "AcademicSession": {
+      "title": "AcademicSession",
+      "description": "Academic year session definition",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Session label (e.g. 2024-2025)" },
+        "startDate": { "type": "string", "description": "Session start date" },
+        "endDate": { "type": "string", "description": "Session end date" },
+        "isDefault": { "type": "boolean", "description": "Whether this is the default active session" },
+        "status": { "type": "string", "enum": ["active", "closed"], "description": "Session status" }
+      },
+      "required": ["name", "startDate", "endDate", "status"]
+    },
+    "SchoolClass": {
+      "title": "SchoolClass",
+      "description": "School class or grade definition",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Class name (e.g. 9th Grade, 10th Grade)" },
+        "sections": { "type": "array", "description": "Sections available in class" },
+        "defaultMonthlyFee": { "type": "number", "description": "Default monthly tuition fee in PKR" },
+        "classTeacher": { "type": "string", "description": "Assigned class teacher name or ID" }
+      },
+      "required": ["name", "defaultMonthlyFee"]
+    },
+    "Student": {
+      "title": "Student",
+      "description": "Enrolled student record in the school",
+      "type": "object",
+      "properties": {
+        "admissionNumber": { "type": "string", "description": "Unique school admission identifier" },
+        "fullName": { "type": "string", "description": "Student full name" },
+        "fatherName": { "type": "string", "description": "Father or guardian full name" },
+        "gender": { "type": "string", "enum": ["male", "female", "other"], "description": "Gender" },
+        "dob": { "type": "string", "description": "Date of birth YYYY-MM-DD" },
+        "classId": { "type": "string", "description": "Class ID" },
+        "className": { "type": "string", "description": "Name of class" },
+        "section": { "type": "string", "description": "Class section" },
+        "rollNumber": { "type": "string", "description": "Class roll number" },
+        "admissionDate": { "type": "string", "description": "Date of admission" },
+        "guardianPhone": { "type": "string", "description": "Guardian primary contact phone" },
+        "address": { "type": "string", "description": "Residential address" },
+        "monthlyFee": { "type": "number", "description": "Agreed monthly tuition fee in PKR" },
+        "otherRecurringCharges": { "type": "number", "description": "Recurring charges (exam/lab/etc)" },
+        "discount": { "type": "number", "description": "Concession or scholarship discount" },
+        "netMonthlyDue": { "type": "number", "description": "Final monthly tuition amount payable" },
+        "status": { "type": "string", "enum": ["active", "withdrawn", "graduated"], "description": "Enrollment status" },
+        "sessionId": { "type": "string", "description": "Enrolled academic session ID" }
+      },
+      "required": ["admissionNumber", "fullName", "fatherName", "gender", "classId", "className", "rollNumber", "monthlyFee", "status", "sessionId"]
+    },
+    "MonthlyFee": {
+      "title": "MonthlyFee",
+      "description": "Monthly fee assessment record for an active student",
+      "type": "object",
+      "properties": {
+        "studentId": { "type": "string", "description": "Student reference ID" },
+        "studentName": { "type": "string", "description": "Student full name" },
+        "admissionNumber": { "type": "string", "description": "Student admission number" },
+        "classId": { "type": "string", "description": "Class ID" },
+        "className": { "type": "string", "description": "Class name" },
+        "section": { "type": "string", "description": "Section" },
+        "sessionId": { "type": "string", "description": "Academic session ID" },
+        "feeMonth": { "type": "string", "description": "Billing month format YYYY-MM" },
+        "baseFee": { "type": "number", "description": "Base monthly tuition fee" },
+        "additionalCharges": { "type": "number", "description": "Approved recurring extra charges" },
+        "concession": { "type": "number", "description": "Concession or discount applied" },
+        "previousBalance": { "type": "number", "description": "Carried forward unpaid dues" },
+        "totalDue": { "type": "number", "description": "Total net due for this invoice" },
+        "paidAmount": { "type": "number", "description": "Total amount paid to date" },
+        "remainingBalance": { "type": "number", "description": "Remaining unpaid balance" },
+        "status": { "type": "string", "enum": ["unpaid", "partially_paid", "paid"], "description": "Fee payment status" },
+        "lastPaymentDate": { "type": "string", "description": "Date of latest payment YYYY-MM-DD" }
+      },
+      "required": ["studentId", "studentName", "admissionNumber", "classId", "sessionId", "feeMonth", "totalDue", "paidAmount", "remainingBalance", "status"]
+    },
+    "FeePayment": {
+      "title": "FeePayment",
+      "description": "Immutable fee payment receipt transaction",
+      "type": "object",
+      "properties": {
+        "receiptNumber": { "type": "string", "description": "Unique fee receipt identifier" },
+        "feeId": { "type": "string", "description": "Reference monthly fee document ID" },
+        "studentId": { "type": "string", "description": "Student ID" },
+        "studentName": { "type": "string", "description": "Student full name" },
+        "admissionNumber": { "type": "string", "description": "Student admission number" },
+        "classId": { "type": "string", "description": "Class ID" },
+        "className": { "type": "string", "description": "Class name" },
+        "section": { "type": "string", "description": "Section" },
+        "sessionId": { "type": "string", "description": "Academic session ID" },
+        "feeMonth": { "type": "string", "description": "Applicable fee month YYYY-MM" },
+        "amountPaid": { "type": "number", "description": "Payment amount in PKR" },
+        "previousBalance": { "type": "number", "description": "Balance prior to this payment" },
+        "remainingBalance": { "type": "number", "description": "Balance remaining after this payment" },
+        "paymentMethod": { "type": "string", "enum": ["cash", "bank_transfer", "easypaisa", "jazzcash", "cheque"], "description": "Method of payment" },
+        "paymentDate": { "type": "string", "description": "Date payment was received YYYY-MM-DD" },
+        "recordedByUid": { "type": "string", "description": "Staff user ID who entered payment" },
+        "recordedByName": { "type": "string", "description": "Staff member name" },
+        "remarks": { "type": "string", "description": "Payment remarks or bank reference" },
+        "isReversed": { "type": "boolean", "description": "Whether payment has been reversed" }
+      },
+      "required": ["receiptNumber", "feeId", "studentId", "amountPaid", "paymentMethod", "paymentDate", "recordedByUid", "recordedByName"]
+    },
+    "Attendance": {
+      "title": "Attendance",
+      "description": "Daily attendance mark for an individual student",
+      "type": "object",
+      "properties": {
+        "studentId": { "type": "string", "description": "Student ID" },
+        "studentName": { "type": "string", "description": "Student full name" },
+        "admissionNumber": { "type": "string", "description": "Student admission number" },
+        "rollNumber": { "type": "string", "description": "Student roll number" },
+        "classId": { "type": "string", "description": "Class ID" },
+        "className": { "type": "string", "description": "Class name" },
+        "section": { "type": "string", "description": "Section" },
+        "sessionId": { "type": "string", "description": "Academic session ID" },
+        "date": { "type": "string", "description": "Date YYYY-MM-DD" },
+        "status": { "type": "string", "enum": ["present", "absent", "leave", "late"], "description": "Daily status" },
+        "markedByUid": { "type": "string", "description": "Staff UID who recorded attendance" },
+        "markedByName": { "type": "string", "description": "Staff name" }
+      },
+      "required": ["studentId", "classId", "sessionId", "date", "status", "markedByUid"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "System audit log for administrative tracking",
+      "type": "object",
+      "properties": {
+        "action": { "type": "string", "description": "Audit action name" },
+        "details": { "type": "string", "description": "Readable description of event" },
+        "performedByUid": { "type": "string", "description": "Staff UID" },
+        "performedByName": { "type": "string", "description": "Staff name" }
+      },
+      "required": ["action", "details", "performedByUid", "performedByName"]
+    }
+  },
+  "firestore": {
+    "/schoolSettings/{settingId}": {
+      "schema": { "$ref": "#/entities/SchoolSetting" },
+      "description": "School configuration, name, location, and session preferences"
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Authorized staff profiles and role assignments"
+    },
+    "/academicSessions/{sessionId}": {
+      "schema": { "$ref": "#/entities/AcademicSession" },
+      "description": "Academic sessions and years"
+    },
+    "/classes/{classId}": {
+      "schema": { "$ref": "#/entities/SchoolClass" },
+      "description": "Class and section registry"
+    },
+    "/students/{studentId}": {
+      "schema": { "$ref": "#/entities/Student" },
+      "description": "Enrolled student profiles"
+    },
+    "/monthlyFees/{feeId}": {
+      "schema": { "$ref": "#/entities/MonthlyFee" },
+      "description": "Monthly fee records per student and month"
+    },
+    "/feePayments/{paymentId}": {
+      "schema": { "$ref": "#/entities/FeePayment" },
+      "description": "Immutable payment transactions and printed receipts"
+    },
+    "/attendance/{attendanceId}": {
+      "schema": { "$ref": "#/entities/Attendance" },
+      "description": "Daily student attendance records"
+    },
+    "/auditLogs/{logId}": {
+      "schema": { "$ref": "#/entities/AuditLog" },
+      "description": "Immutable system audit events"
+    }
+  }
+}

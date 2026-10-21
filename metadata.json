@@ -1,0 +1,6 @@
+{
+  "name": "Workers Model Higher Secondary School Pishin - School Management System",
+  "description": "Comprehensive fee management, student records, daily attendance registers, and academic reporting system for Workers Model Higher Secondary School Pishin, Balochistan.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

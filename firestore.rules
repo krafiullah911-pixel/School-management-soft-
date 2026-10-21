@@ -1,0 +1,157 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Global authentication & role helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isInitialAdmin() {
+      return isSignedIn() && request.auth.token.email == 'krafiullah911@gmail.com';
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isSuperAdmin() {
+      return isInitialAdmin() || (
+        isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        getUserData().role == 'super_admin' &&
+        getUserData().isActive == true
+      );
+    }
+
+    function isPrincipal() {
+      return isSuperAdmin() || (
+        isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        getUserData().role == 'principal' &&
+        getUserData().isActive == true
+      );
+    }
+
+    function isAccounts() {
+      return isPrincipal() || (
+        isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        getUserData().role == 'accounts_staff' &&
+        getUserData().isActive == true
+      );
+    }
+
+    function isStaff() {
+      return isSuperAdmin() || (
+        isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        getUserData().isActive == true
+      );
+    }
+
+    function isTeacher() {
+      return isStaff() && (
+        getUserData().role == 'teacher' ||
+        getUserData().role == 'super_admin' ||
+        getUserData().role == 'principal'
+      );
+    }
+
+    // Test connection doc used for client verification
+    match /test/{docId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    // School settings (general school info, receipt prefix, sessions)
+    // Publicly readable so that login screen and institution banner can display school name and location
+    match /schoolSettings/{settingId} {
+      allow read: if true;
+      allow create, update: if isSuperAdmin() || isPrincipal();
+      allow delete: if isSuperAdmin();
+    }
+
+    // Users and Staff roles
+    match /users/{userId} {
+      // Users can read their own profile; Super Admin & Principal can view all staff
+      allow read: if isSignedIn() && (request.auth.uid == userId || isPrincipal() || isSuperAdmin());
+      // Super admin can create and update staff profiles;
+      // Users can bootstrap/create their own profile if they are the initial admin
+      allow create: if isSuperAdmin() || (isSignedIn() && request.auth.uid == userId && isInitialAdmin());
+      allow update: if isSuperAdmin() || (
+        // Staff can update non-critical profile fields (e.g. phone, displayName) but NOT their role or isActive
+        isSignedIn() && request.auth.uid == userId &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'isActive'])
+      );
+      allow delete: if isSuperAdmin();
+    }
+
+    // Academic Sessions
+    match /academicSessions/{sessionId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isSuperAdmin() || isPrincipal();
+    }
+
+    // Classes and Sections
+    match /classes/{classId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isSuperAdmin() || isPrincipal();
+    }
+
+    // Student Records
+    match /students/{studentId} {
+      // Staff members can read student profiles
+      allow read: if isStaff();
+      // Only Super Admin, Principal, and Accounts can add/edit/archive students
+      allow create, update: if isSuperAdmin() || isPrincipal() || isAccounts();
+      allow delete: if isSuperAdmin();
+    }
+
+    // Monthly Fee assessments
+    match /monthlyFees/{feeId} {
+      // Only Accounts, Principal, and Super Admin can read and manage fees
+      allow read: if isAccounts();
+      allow create, update: if isAccounts();
+      allow delete: if isSuperAdmin();
+    }
+
+    // Fee Payments & Receipts (Immutable ledger)
+    match /feePayments/{paymentId} {
+      // Teachers cannot access private financial records unless authorized
+      allow read: if isAccounts();
+      // Only Accounts, Principal, or Super Admin can record payments
+      allow create: if isAccounts() &&
+        request.resource.data.amountPaid > 0 &&
+        request.resource.data.recordedByUid == request.auth.uid;
+      // Financial transactions are immutable; updates allowed only for authorized reversals
+      allow update: if isSuperAdmin() || (
+        isAccounts() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isReversed', 'reversalReason', 'reversedBy', 'reversedAt'])
+      );
+      // Strictly prevent deletion of historical payments
+      allow delete: if false;
+    }
+
+    // Daily Attendance
+    match /attendance/{attendanceId} {
+      // Any authorized staff member (including teachers) can read attendance
+      allow read: if isStaff();
+      // Teachers and staff can create and correct attendance
+      allow create, update: if isStaff();
+      allow delete: if isSuperAdmin() || isPrincipal();
+    }
+
+    // Audit Logs
+    match /auditLogs/{logId} {
+      allow read: if isPrincipal() || isSuperAdmin();
+      allow create: if isSignedIn();
+      allow update, delete: if false; // Append-only audit trail
+    }
+  }
+}
